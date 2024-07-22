@@ -1,0 +1,26 @@
+{
+  "baseUrl": "http://localhost:8080",
+  "tokenUrl": "http://localhost:8080/token",
+  "tokenField": "accessToken",
+  "tokenType": "Bearer",
+  "headerKeys": [],
+  "headerValues": [],
+  "authKeys": ["username","password"],
+  "endpoints": [
+    {
+      "name": "Create user",
+      "description": "used for making ldap user",
+      "auth": true,
+      "endpoint": "/ldap/admin/user",
+      "method": "POST",
+      "keys":["username","password"]
+    },{
+      "name": "changing password",
+      "description": "used changing ldap password",
+      "auth": false,
+      "endpoint": "/ldap/password",
+      "method": "POST",
+      "keys": ["username","newpassword"]
+    }
+  ]
+}
