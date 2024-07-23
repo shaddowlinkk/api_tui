@@ -6,7 +6,9 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -19,15 +21,18 @@ type endpoint struct {
 	Keys        []string `json:"keys"`
 }
 type apiConfig struct {
-	BaseUrl      string   `json:"baseUrl"`
-	TokenURL     string   `json:"tokenURL"`
-	TokenField   string   `json:"tokenField"`
-	TokenType    string   `json:"tokenType"`
-	HeaderKeys   []string `json:"headerKeys"`
-	HeaderValues []string `json:"headerValues"`
-	AuthKeys     []string `json:"authKeys"`
-	AuthValues   []string
-	Endpoints    []endpoint `json:"endpoints"`
+	BaseUrl         string   `json:"baseUrl"`
+	TokenURL        string   `json:"tokenURL"`
+	TokenField      string   `json:"tokenField"`
+	TokenType       string   `json:"tokenType"`
+	HeaderKeys      []string `json:"headerKeys"`
+	HeaderValues    []string `json:"headerValues"`
+	AuthParamKeys   []string `json:"authParamKeys"`
+	AuthParamValues []string `json:"authParamValues"`
+	AuthDataType    string   `json:"authDataType"`
+	AuthKeys        []string `json:"authKeys"`
+	AuthValues      []string
+	Endpoints       []endpoint `json:"endpoints"`
 }
 
 func read_config(filename string) apiConfig {
@@ -41,22 +46,41 @@ func read_config(filename string) apiConfig {
 	}
 	return api
 }
-func auth_request(authUrl string, headerkeys []string, headervalues []string, authkeys []string, authvalues []string) ([]byte, error) {
+func auth_request(authUrl string, headerkeys []string, headervalues []string, authkeys []string, authvalues []string, dataType string) ([]byte, error) {
 	bodymap := make(map[string]string)
-	for i, key := range authkeys {
-		bodymap[key] = authvalues[i]
+	if len(authvalues) == 0 {
+		return nil, fmt.Errorf("nil auth values")
 	}
-	bodyBytes, err := json.Marshal(bodymap)
-	if err != nil {
-		return nil, err
+	var r *http.Request
+	if "json" == strings.ToLower(dataType) {
+		for i, key := range authkeys {
+			bodymap[key] = authvalues[i]
+		}
+		bodyBytes, err := json.Marshal(bodymap)
+		if err != nil {
+			return nil, err
+		}
+		r, err = http.NewRequest("POST", authUrl, bytes.NewBuffer(bodyBytes))
+		if err != nil {
+			return nil, err
+		}
+	} else if "param" == strings.ToLower(dataType) {
+		data := url.Values{}
+		for i, key := range authkeys {
+			data.Add(key, authvalues[i])
+		}
+		var err error
+		r, err = http.NewRequest("POST", authUrl, strings.NewReader(data.Encode()))
+		if err != nil {
+			return nil, err
+		}
 	}
-	r, err := http.NewRequest("POST", authUrl, bytes.NewBuffer(bodyBytes))
-	if err != nil {
-		return nil, err
+	if r == nil {
+		return nil, fmt.Errorf("err in auth request")
 	}
 	r.Header.Add("Content-Type", "application/json")
 	for i, key := range headerkeys {
-		r.Header.Add(key, authvalues[i])
+		r.Header.Add(key, headervalues[i])
 	}
 	return exec_request(r)
 }
@@ -74,7 +98,7 @@ func exec_http(config apiConfig, idx_endpoint int, values []string) ([]byte, err
 		return nil, err
 	}
 	if config.Endpoints[idx_endpoint].Auth {
-		data, err := auth_request(config.TokenURL, config.HeaderKeys, config.HeaderValues, config.AuthKeys, config.AuthValues)
+		data, err := auth_request(config.TokenURL, config.HeaderKeys, config.HeaderValues, config.AuthKeys, config.AuthValues, config.AuthDataType)
 		if err != nil {
 			return nil, err
 		}

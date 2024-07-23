@@ -3,8 +3,11 @@
   "tokenUrl": "http://localhost:8080/token",
   "tokenField": "accessToken",
   "tokenType": "Bearer",
+  "authParamKeys": ["test"],
+  "authParamValues":["test"],
   "headerKeys": [],
   "headerValues": [],
+  "authDataType": "jason",
   "authKeys": ["username","password"],
   "endpoints": [
     {
@@ -21,6 +24,14 @@
       "endpoint": "/ldap/password",
       "method": "POST",
       "keys": ["username","newpassword"]
+    },
+    {
+      "name": "health",
+      "description": "used changing ldap password",
+      "auth": false,
+      "endpoint": "/health",
+      "method": "GET",
+      "keys": []
     }
   ]
 }
