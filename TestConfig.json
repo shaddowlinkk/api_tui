@@ -7,7 +7,7 @@
   "authParamValues":["test"],
   "headerKeys": [],
   "headerValues": [],
-  "authDataType": "jason",
+  "authDataType": "json",
   "authKeys": ["username","password"],
   "endpoints": [
     {
