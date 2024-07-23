@@ -1,5 +1,5 @@
 {
-  "baseUrl": "http://localhost:8082",
+  "baseUrl": "http://localhost:8080",
   "tokenUrl": "http://localhost:8080/token",
   "tokenField": "accessToken",
   "tokenType": "Bearer",
