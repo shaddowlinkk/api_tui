@@ -46,7 +46,7 @@ func read_config(filename string) apiConfig {
 	}
 	return api
 }
-func auth_request(authUrl string, headerkeys []string, headervalues []string, authkeys []string, authvalues []string, dataType string) ([]byte, error) {
+func auth_request(authUrl string, headerkeys []string, headervalues []string, authkeys []string, authvalues []string, paramKeys []string, paramValues []string, dataType string) ([]byte, error) {
 	bodymap := make(map[string]string)
 	if len(authvalues) == 0 {
 		return nil, fmt.Errorf("nil auth values")
@@ -64,16 +64,21 @@ func auth_request(authUrl string, headerkeys []string, headervalues []string, au
 		if err != nil {
 			return nil, err
 		}
+		r.Header.Add("Content-Type", "application/json")
 	} else if "param" == strings.ToLower(dataType) {
 		data := url.Values{}
 		for i, key := range authkeys {
-			data.Add(key, authvalues[i])
+			data.Set(key, authvalues[i])
+		}
+		for i, key := range paramKeys {
+			data.Set(key, paramValues[i])
 		}
 		var err error
 		r, err = http.NewRequest("POST", authUrl, strings.NewReader(data.Encode()))
 		if err != nil {
 			return nil, err
 		}
+		r.Header.Add("Content-Type", "application/x-www-form-urlencoded")
 	}
 	if r == nil {
 		return nil, fmt.Errorf("err in auth request")
@@ -98,16 +103,16 @@ func exec_http(config apiConfig, idx_endpoint int, values []string) ([]byte, err
 		return nil, err
 	}
 	if config.Endpoints[idx_endpoint].Auth {
-		data, err := auth_request(config.TokenURL, config.HeaderKeys, config.HeaderValues, config.AuthKeys, config.AuthValues, config.AuthDataType)
+		data, err := auth_request(config.TokenURL, config.HeaderKeys, config.HeaderValues, config.AuthKeys, config.AuthValues, config.AuthParamKeys, config.AuthParamValues, config.AuthDataType)
 		if err != nil {
 			return nil, err
 		}
-		var authdata map[string]string
+		var authdata map[string]interface{}
 		err = json.Unmarshal(data, &authdata)
 		if err != nil {
 			return nil, err
 		}
-		r.Header.Add("Authorization", config.TokenType+" "+authdata[config.TokenField])
+		r.Header.Add("Authorization", config.TokenType+" "+authdata[config.TokenField].(string))
 	}
 	r.Header.Add("Content-Type", "application/json")
 	return exec_request(r)

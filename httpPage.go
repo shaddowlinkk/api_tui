@@ -31,9 +31,9 @@ func (m httpModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "q", "ctrl+c", "esc":
+		case "q", "ctrl+c":
 			return m, tea.Quit
-		case "backspace":
+		case "esc":
 			return m.lastModle, nil
 		default:
 			return m, nil

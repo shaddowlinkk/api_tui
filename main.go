@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	config := read_config("TestConfig.json")
+	config := read_config(os.Args[1])
 	items := make([]list.Item, 0)
 	for i, epoint := range config.Endpoints {
 		items = append(items, item{title: epoint.Name, desc: epoint.Description, idx: i})
